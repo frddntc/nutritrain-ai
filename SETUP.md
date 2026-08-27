@@ -1,6 +1,6 @@
-# 🔧 SETUP - Guia de Configuraç»£o
+# 🔧 SETUP - Guia de Configuração
 
-Este guia cobre **passo a passo** a configuraç»£o de todos os serviços necessários para o NutriTrain AI Bot.
+Este guia cobre **passo a passo** a configuração de todos os serviços necessários para o NutriTrain AI Bot.
 
 ## 📋 Pré-requisitos
 
@@ -25,7 +25,7 @@ Tempo estimado: **30-45 minutos**
    - **Region**: Escolha a mais próxima (ex: `us-east-1`)
 4. Clique em **"Create new project"** (aguarde 2-3 min)
 
-### Passo 1.2: Habilitar Extensã»£o pgvector
+### Passo 1.2: Habilitar Extensão pgvector
 
 1. No dashboard do projeto, vá para **SQL Editor** (menu lateral)
 2. Clique em **"New Query"**
@@ -63,13 +63,13 @@ create policy "Permitir acesso público" on pdf_embeddings
 
 ### Passo 1.4: Obter Credenciais
 
-1. Vá»¡ para **Settings** (í»¡cone de engrenagem no menu lateral)
+1. Vá para **Settings** (ícone de engrenagem no menu lateral)
 2. Clique em **API**
 3. Anote:
    - **Project URL**: `https://xxxxx.supabase.co`
    - **API Key (public/anon)**: `eyJhbG...` (chave longa)
 
-> ⚠️ **Importante**: Use a chave **public/anon**, nã»£o a `service_role` (esta é administrativa).
+> ⚠️ **Importante**: Use a chave **public/anon**, não a `service_role` (esta é administrativa).
 
 ---
 
@@ -126,7 +126,7 @@ create policy "Permitir acesso público" on pdf_embeddings
 
 1. No Telegram, busque por `@NutriTrainAI_bot`
 2. Clique em **Iniciar** ou digite `/start`
-3. O bot deve responder (poré©©m ainda nã»£o far á nada at é configurar o n8n)
+3. O bot deve responder (porém ainda não fará nada até configurar o n8n)
 
 ---
 
@@ -168,21 +168,21 @@ No n8n, vá para **Credentials** (menu lateral) e crie:
 
 ## 5️⃣ Importar Workflows
 
-### Passo 5.1: Workflow 01 - Ingestã»£o de PDFs
+### Passo 5.1: Workflow 01 - Ingestão de PDFs
 
 1. No n8n, vá para **Workflows** → **Add workflow**
-2. Clique nos **trê»ªs pontos** no canto superior direito → **Import from File**
+2. Clique nos **três pontos** no canto superior direito → **Import from File**
 3. Selecione o arquivo `workflows/01-pdf-ingestion.json`
-4. **Configure os nós**:
+4. **Configure os nós**:
 
-#### Nó: `Supabase Vector Store`
+#### Nó: `Supabase Vector Store`
 - **Credential**: Selecione `Supabase nutritrain`
 - **Table**: `pdf_embeddings`
-- **Embedding**: `Gemini Embedding` (sub-nóººº)
+- **Embedding**: `Gemini Embedding` (sub-nó)
   - **Model**: `text-embedding-004`
 
-#### Nó: `Extract from File`
-- Deixe como está (extrai texto de PDF)
+#### Nó: `Extract from File`
+- Deixe como está (extrai texto de PDF)
 
 5. **Salve** o workflow (Ctrl+S)
 6. **Ative** o workflow (toggle no topo)
@@ -191,21 +191,21 @@ No n8n, vá para **Credentials** (menu lateral) e crie:
 
 1. **Add workflow** → **Import from File**
 2. Selecione `workflows/02-telegram-bot.json`
-3. **Configure os nós**:
+3. **Configure os nós**:
 
-#### Nó: `Telegram Trigger`
+#### Nó: `Telegram Trigger`
 - **Credential**: Selecione `Telegram NutriTrain`
 - **Updates**: `message`
 - **Chat ID**: Deixe em branco (para escutar todos)
 
-#### Nó: `Supabase Vector Store` (RAG Search)
+#### Nó: `Supabase Vector Store` (RAG Search)
 - **Credential**: `Supabase nutritrain`
 - **Table**: `pdf_embeddings`
 - **Operation**: `Search`
-- **Query**: `{{ $json.message }}` (ou variá¡¡vel apropriada)
+- **Query**: `{{ $json.message }}` (ou variável apropriada)
 - **Top K**: `5`
 
-#### Nó: `Google Gemini` (LLM)
+#### Nó: `Google Gemini` (LLM)
 - **Credential**: `Gemini API`
 - **Model**: `gemini-2.5-flash`
 - **Prompt**: Use o template em `docs/prompt-templates.md`
@@ -216,18 +216,18 @@ No n8n, vá para **Credentials** (menu lateral) e crie:
 
 1. **Add workflow** → **Import from File**
 2. Selecione `workflows/03-plan-generator.json`
-3. **Configure os nós**:
+3. **Configure os nós**:
 
-#### Nó: `Google Sheets` (Ler dados do usuário)
+#### Nó: `Google Sheets` (Ler dados do usuário)
 - **Credential**: `Google Sheets`
 - **Operation**: `Read`
 - **Spreadsheet ID**: (crie uma planilha com os dados)
 - **Range**: `Sheet1!A:Z`
 
-#### Nó: `Google Gemini` (Gerar plano)
+#### Nó: `Google Gemini` (Gerar plano)
 - **Credential**: `Gemini API`
 - **Model**: `gemini-2.5-flash`
-- **Prompt**: Template especí»¡fico para planos (ver `docs/prompt-templates.md`)
+- **Prompt**: Template específico para planos (ver `docs/prompt-templates.md`)
 
 5. **Salve** e **Ative**
 
@@ -235,14 +235,14 @@ No n8n, vá para **Credentials** (menu lateral) e crie:
 
 ## 6️⃣ Fazer Upload dos PDFs
 
-### Opç»£o A: Via Workflow 01
+### Opção A: Via Workflow 01
 
-1. No workflow `01-pdf-ingestion`, adicione um nó **Manual Trigger**
-2. Adicione um nó **Read Binary File** (se os PDFs estiverem no seu computador)
+1. No workflow `01-pdf-ingestion`, adicione um nó **Manual Trigger**
+2. Adicione um nó **Read Binary File** (se os PDFs estiverem no seu computador)
 3. Ou use **Google Drive Trigger** (se os PDFs estiverem no Drive)
 4. Execute o workflow manualmente
 
-### Opç»£o B: Via SQL Direto (Avanç»¡ado)
+### Opção B: Via SQL Direto (Avançado)
 
 1. Extraia o texto dos PDFs manualmente (use https://smallpdf.com/pt/pdf-para-texto)
 2. No **SQL Editor** do Supabase, insira:
@@ -250,7 +250,7 @@ No n8n, vá para **Credentials** (menu lateral) e crie:
 ```sql
 insert into pdf_embeddings (content, metadata)
 values (
-  'Texto extraí»¡do do PDF...',
+  'Texto extraído do PDF...',
   '{"fonte": "nutricao_esportiva.pdf", "pagina": 1}'::jsonb
 );
 ```
@@ -282,7 +282,7 @@ values (
 - O token do bot está errado
 - Regere o token no @BotFather com `/revoke` e atualize no n8n
 
-### Workflow nã»£o executa
+### Workflow não executa
 - Verifique se o workflow está **Ativo** (toggle verde no topo)
 - Confira os **logs de execução** (clique no workflow → Execution List)
 
@@ -296,4 +296,4 @@ values (
 
 ---
 
-**Pronto! Agora você»ª tem um agente de IA funcional para dieta e treino.** 🎉
+**Pronto! Agora você tem um agente de IA funcional para dieta e treino.** 🎉

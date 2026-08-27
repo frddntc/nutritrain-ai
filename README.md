@@ -1,26 +1,30 @@
-# Agente Científico de Treino e Dieta 🏋️‍♂️🧠
+# Agente Científico de Treino e Nutrição 🏋️‍♂️🧠
 
-## 🎯 Qual é a proposta deste agente?
-Este projeto é um agente de Inteligência Artificial focado na prescrição baseada em evidências de treinos de musculação e dietas. Desenvolvido com foco educacional e acadêmico, o sistema atua como um planejador de fitness de alta precisão.
+## 🎯 Proposta do Projeto
+Este projeto é um agente de Inteligência Artificial focado na prescrição baseada em evidências de treinos de musculação e dietas. Desenvolvido com foco educacional e acadêmico, o sistema atua como um assistente de planejamento fitness de alta precisão, operando **100% com custo zero** (bootstrap) através de ferramentas em cloud.
 
-Diferente de chatbots genéricos (que frequentemente "alucinam" recomendações nutricionais e erram cálculos calóricos), este agente foi arquitetado sob o princípio da **separação estrita de responsabilidades**:
+Diferente de chatbots genéricos, este agente foi arquitetado sob o princípio da **separação estrita de responsabilidades**:
+1. **Motor Cognitivo (Gemini 3.1 Flash Lite):** Atua como orquestrador lógico. Interpreta as requisições via Discord, decide quais ferramentas acionar e elabora as respostas baseadas em dados recuperados.
+2. **Base Científica (RAG com Supabase + pgvector):** Consulta uma biblioteca de artigos científicos (em vetores de 768 dimensões) para fundamentar as diretrizes em literatura atual.
+3. **Motor Matemático Determinístico (Code Node nativo n8n em Python):** Cálculos metabólicos e distribuição de macronutrientes são executados via código Python isolado do LLM, garantindo precisão matemática (ex: equações de Mifflin-St Jeor) sem risco de alucinações lógicas.
 
-1. **Motor Cognitivo (Gemini 3.1 Flash Lite):** Inteligência de baixo custo (Free Tier) e alta velocidade. É o orquestrador que interpreta a requisição do usuário, decide quais ferramentas chamar e formula a explicação final.
-2. **Base Científica (RAG com Supabase + pgvector):** Consulta uma biblioteca de artigos científicos (PDFs) para garantir que as diretrizes sugeridas venham da literatura real, mitigando viéses não fundamentados.
-3. **Motor Matemático Determinístico:** Em vez de pedir ao LLM para fazer contas, o agente aciona algoritmos determinísticos desenvolvidos em Python, garantindo precisão milimétrica no cálculo da Taxa Metabólica Basal, Macronutrientes e Volume de Treino.
-
-## 🛠 Arquitetura e Integrações
-*   **n8n Cloud (Orquestração):** Gerencia todo o fluxo de trabalho, os gatilhos e a comunicação com as APIs externas.
-*   **Discord (Interface do Usuário):** Canal de comunicação interativo e assíncrono. Conta com gestão avançada de contexto para permitir o planejamento para múltiplas pessoas em um mesmo chat.
-*   **Supabase (Banco de Dados):** Armazena o banco vetorial (pgvector) dos PDFs de estudo, os perfis dos usuários, logs de execução e planos gerados.
-*   **Google AI Studio (LLM & Embeddings):** Fornece o Gemini 3.1 Flash Lite e o modelo de embeddings (text-embedding-004).
+## 🛠 Arquitetura e Stack Tecnológica
+*   **n8n Cloud:** Orquestração de todo o fluxo de trabalho (Workflows, Webhooks, Roteamento, Validação Ed25519).
+*   **Discord API:** Interface de interação com o usuário operando exclusivamente via *Slash Commands* (`/mensagem`, `/novo_plano`) para total compatibilidade com os endpoints de *Interaction* do Discord.
+*   **Supabase:** Banco de dados PostgreSQL contendo:
+    *   `pgvector`: Armazenamento de embeddings científicos.
+    *   `Chat Memory`: Armazenamento de contexto isolado por ID de usuário (permitindo múltiplos usuários no mesmo canal sem cruzar dados).
+*   **Google AI Studio:** LLM (`gemini-3.1-flash-lite`) e modelo de embeddings (`gemini-embedding-001`) via API Free Tier.
 
 ## 👤 Exemplo de Caso de Uso e Teste de Estresse
-O sistema está sendo validado para lidar com perfis detalhados e rotinas complexas. 
-**Exemplo de Perfil de Validação:**
-*   **Usuário:** Masculino, 20 anos, 1,95m de altura, 105kg.
-*   **Objetivo:** Recomposição corporal (foco simultâneo em ganho de massa e perda de gordura).
-*   **Dieta:** Alvo aproximado de 3200 kcal/dia. Inclusão de variedada de proteínas, com uso de ovos como base rápida em dias sem marmitas preparadas.
-*   **Treino:** Rotina estruturada de hipertrofia com divisão de 5 dias na semana.
+O sistema foi desenhado para lidar com fisiologias e rotinas complexas, não se limitando a regras genéricas engessadas.
 
-**Ação do Agente:** Ao receber esse perfil, o agente não chuta a proteína baseando-se no peso total bruto (o que daria um valor inatingível), mas sim cruza o perfil de recomposição com a base científica, aciona a calculadora em Python para distribuir macros viáveis para as 3200 kcal e devolve a resposta estruturada via Discord.
+**Exemplo Prático de Validação:**
+*   **Perfil:** Masculino, 20 anos, 1,95m de altura, 105kg.
+*   **Objetivo:** Recomposição corporal (ganho de massa muscular com perda simultânea de gordura).
+*   **Demanda:** Rotina estruturada de musculação para 5 dias na semana, meta aproximada de 3200 kcal/dia, aproveitando fontes proteicas rápidas (como ovos) para dias sem refeições pré-preparadas.
+
+**Resolução do Agente:** Em vez de usar a diretriz comum e falha de "2g de proteína por kg de peso total" (o que resultaria em inviáveis 210g+ de proteína diária para alguém com 105kg), o *Code Node* em Python estima a massa magra do indivíduo e calibra os macronutrientes de forma executável dentro da meta de 3200 kcal. O LLM então recupera diretrizes científicas sobre volume de treino adequado para recomposição e monta a resposta personalizada.
+
+## ⚖️ Disclaimer Legal e Ético
+Este assistente atua estritamente como um **Copiloto de Dieta e Treino** orientado à educação e tecnologia. **Não se trata de um Nutrólogo, Nutricionista ou Médico.** Toda sugestão gerada pelo agente deve ser validada por um profissional de saúde habilitado, e o sistema é instruído a reforçar essa ressalva em suas interações.

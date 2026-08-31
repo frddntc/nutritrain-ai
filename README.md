@@ -4,7 +4,7 @@ Nosso sistema possui uma base de arquivos para embasar os pensamentos do agente.
 É de SUMA IMPORTÂNCIA que o agente não invente dados, não forneça planilhas de treino ou dieta sem ter no mínimo informações básicas sobre o usuário.
 Após o contato inicial, o agente deve responder com perguntas sobre o usuário, como: Idade, Gênero, Altura, Rotina, Objetivos e mais o que julgar ser necessário para uma boa parametrização de treino e dieta (me dê ideias de perguntas a serem feitas para o usuário no contato inicial, porém mantenha como OBRIGATÓRIAS para o agente trabalhar, apenas Idade, Gênero, Altura e Objetivos)
 Tendo as respostas das perguntas em sua base de dados, o agente deve buscar nos arquivos inseridos, estudos e teorias que embasem suas decisões a partir daí. Mais uma vez, em hipótese alguma, o agente pode criar dados sobre nutrição ou treino, tudo deve ser embasado nos arquivos.
-# Qual é o fluxo da integração?
+## Qual é o fluxo da integração?
 1. Usuário envia pergunta no chat com o agente
 2. O agente responde agradecendo o contato e explicando que, para seguir com o atendimento, precisa que o usuário responda algumas perguntas
 3. Tendo as respostas das perguntas em mãos, o agente busca no seu banco de dados arquivos que o auxiliem na elaboração do plano de treino e dieta para o cliente (Este banco de dados também deve ser criado por nós para inserção dos arquivos)

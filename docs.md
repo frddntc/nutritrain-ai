@@ -1,6 +1,6 @@
 # Plano Consolidado — Agente de IA para Dieta e Treino (n8n Cloud + Gemini)
 
-> Versão 2 — consolida as decisões tomadas em cima do brainstorm inicial. Este documento descreve a arquitetura **escolhida**, não mais um leque de opções. Ainda é planejamento — nenhum workflow foi implementado.
+> Este documento descreve a arquitetura **escolhida**.
 
 ---
 
@@ -8,7 +8,7 @@
 
 Agente conversacional no n8n Cloud que conduz anamnese, calcula parâmetros de forma determinística e gera planos de dieta e treino individualizados, sempre explicando o raciocínio.
 
-**Mudança-chave em relação ao brainstorm original:** o agente **nunca se recusa a responder**. Toda recomendação segue uma hierarquia de três níveis de fonte, sempre declarada explicitamente ao usuário:
+O agente **nunca se recusa a responder**. Toda recomendação segue uma hierarquia de três níveis de fonte, sempre declarada explicitamente ao usuário:
 
 1. **Base de conhecimento interna** (PDFs indexados) — nível preferencial, citado com documento/trecho;
 2. **Busca no Google** (ferramenta nativa de grounding da própria API Gemini), quando a base interna não cobrir o ponto — citada como "informação obtida por busca na web, não verificada pela base de conhecimento";

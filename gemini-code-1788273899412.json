@@ -1,0 +1,310 @@
+{
+  "name": "Agente Dieta e Treino - Workflow Principal",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ]
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 0],
+      "id": "node-telegram-trigger",
+      "name": "Telegram Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT p.dados, p.completo FROM app.perfis p JOIN app.usuarios u ON u.id = p.usuario_id WHERE u.telegram_id = '{{ $json.message.from.id }}';"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [220, 0],
+      "id": "node-postgres-get",
+      "name": "Buscar Perfil Supabase"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "={{ $env.GEMINI_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"role\": \"user\",\n      \"parts\": [\n        {\n          \"text\": \"Você é um assistente de saúde. Extraia os dados da mensagem do usuário e atualize a ficha.\\nMensagem: {{ $('Telegram Trigger').item.json.message.text }}\\nPerfil Atual: {{ JSON.stringify($json.dados || {}) }}\\n\\nResponda APENAS em JSON estrito:\\n{\\n  \\\"dados_atualizados\\\": {\\\"idade\\\": null, \\\"sexo\\\": null, \\\"altura\\\": null, \\\"peso\\\": null, \\\"objetivo\\\": null, \\\"nivel_atividade\\\": \\\"moderado\\\"},\\n  \\\"faltam_obrigatorias\\\": true,\\n  \\\"campos_faltantes\\\": [\\\"altura\\\"],\\n  \\\"resposta_pedir_dados\\\": \\\"Texto amigável solicitando os dados faltantes\\\"\\n}\"\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"responseMimeType\": \"application/json\"\n  }\n}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 0],
+      "id": "node-gemini-anamnese",
+      "name": "Anamnese (Gemini 3.5 Flash Lite)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ JSON.parse($json.candidates[0].content.parts[0].text).faltam_obrigatorias }}",
+              "value2": false
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [660, 0],
+      "id": "node-if-completo",
+      "name": "Dados Completos?"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ JSON.parse($('Anamnese (Gemini 3.5 Flash Lite)').item.json.candidates[0].content.parts[0].text).resposta_pedir_dados }}"
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [880, 180],
+      "id": "node-telegram-pedir-dados",
+      "name": "Pedir Dados Faltantes"
+    },
+    {
+      "parameters": {
+        "jsCode": "const anamneseRes = JSON.parse($('Anamnese (Gemini 3.5 Flash Lite)').item.json.candidates[0].content.parts[0].text);\nconst perfil = anamneseRes.dados_atualizados;\n\nconst peso = parseFloat(perfil.peso);\nconst altura = parseFloat(perfil.altura);\nconst idade = parseInt(perfil.idade);\nconst sexo = (perfil.sexo || '').toLowerCase();\nconst objetivo = (perfil.objetivo || '').toLowerCase();\nconst nivelAtividade = perfil.nivel_atividade || 'moderado';\n\n// Mifflin-St Jeor\nlet tmb = (10 * peso) + (6.25 * altura) - (5 * idade);\ntmb += (sexo.includes('m') || sexo.includes('homem') || sexo.includes('masculino')) ? 5 : -161;\n\nconst fatores = {\n  sedentario: 1.2,\n  leve: 1.375,\n  moderado: 1.55,\n  intenso: 1.725,\n  muito_intenso: 1.9\n};\nconst fator = fatores[nivelAtividade] || 1.55;\nconst get = tmb * fator;\n\nlet caloriasAlvo = get;\nif (objetivo.includes('emagrec') || objetivo.includes('perda')) {\n  caloriasAlvo -= 500;\n} else if (objetivo.includes('hipertrofia') || objetivo.includes('ganho')) {\n  caloriasAlvo += 300;\n}\n\nconst proteinaGrams = peso * 2.0;\nconst gorduraGrams = peso * 1.0;\nconst proteinaKcal = proteinaGrams * 4;\nconst gorduraKcal = gorduraGrams * 9;\nconst carboKcal = Math.max(0, caloriasAlvo - (proteinaKcal + gorduraKcal));\nconst carboGrams = carboKcal / 4;\n\nreturn {\n  json: {\n    perfil,\n    calculos: {\n      tmb: Math.round(tmb),\n      get: Math.round(get),\n      calorias_alvo: Math.round(caloriasAlvo),\n      macros: {\n        proteina_g: Math.round(proteinaGrams),\n        gordura_g: Math.round(gorduraGrams),\n        carboidrato_g: Math.round(carboGrams)\n      }\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, -100],
+      "id": "node-code-calculos",
+      "name": "Cálculos Determinísticos"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "={{ $env.GEMINI_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"models/gemini-embedding-001\",\n  \"content\": {\n    \"parts\": [{\n      \"text\": \"Dieta e treino para {{ $json.perfil.objetivo }}, peso {{ $json.perfil.peso }}kg, altura {{ $json.perfil.altura }}cm\"\n    }]\n  },\n  \"outputDimensionality\": 768\n}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, -100],
+      "id": "node-embedding-query",
+      "name": "Gerar Embedding Query"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT content, metadata, 1 - (embedding <=> '{{ JSON.stringify($json.embedding.values) }}'::vector) as similarity FROM rag.document_chunks WHERE 1 - (embedding <=> '{{ JSON.stringify($json.embedding.values) }}'::vector) > 0.6 ORDER BY similarity DESC LIMIT 5;"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1320, -100],
+      "id": "node-postgres-rag",
+      "name": "Buscar Vetores RAG"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "={{ $env.GEMINI_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"tools\": [{ \"google_search\": {} }],\n  \"contents\": [\n    {\n      \"role\": \"user\",\n      \"parts\": [\n        {\n          \"text\": \"Você é um especialista em nutrição e treino. Crie um plano individualizado.\\n\\nCÁLCULOS OBRIGATÓRIOS (SEGA FIELMENTE):\\n- Calorias Alvo: {{ $('Cálculos Determinísticos').item.json.calculos.calorias_alvo }} kcal\\n- Proteínas: {{ $('Cálculos Determinísticos').item.json.calculos.macros.proteina_g }}g\\n- Gorduras: {{ $('Cálculos Determinísticos').item.json.calculos.macros.gordura_g }}g\\n- Carboidratos: {{ $('Cálculos Determinísticos').item.json.calculos.macros.carboidrato_g }}g\\n\\nCONTEXTO BASE INTERNA (KB):\\n{{ JSON.stringify($json) }}\\n\\nHIERARQUIA DE FONTES (MANDATÓRIO EM CADA ITEM):\\n1. [Fonte: Base Interna - Documento/Seção]\\n2. [Fonte: Busca na Web, não verificada pela base de conhecimento]\\n3. [Fonte: Conhecimento geral do modelo, não verificado por fonte específica]\\n\\nGere a dieta detalhada, treino semanal e justificativa clínica.\"\n        }\n      ]\n    }\n  ]\n}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1540, -100],
+      "id": "node-gemini-gerar-plano",
+      "name": "Gemini 3.7 Flash - Gerar Plano"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "={{ $env.GEMINI_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"role\": \"user\",\n      \"parts\": [\n        {\n          \"text\": \"Você é um auditor de qualidade. Verifique se o plano abaixo atende aos critérios:\\n{{ $('Gemini 3.7 Flash - Gerar Plano').item.json.candidates[0].content.parts[0].text }}\\n\\nCritérios:\\n1. Todas as recomendações possuem rótulo [Fonte: ...]?\\n2. Os números bateram exatamente com o plano?\\n\\nResponda em JSON estrito:\\n{\\n  \\\"aprovado\\\": true,\\n  \\\"motivo_reprovacao\\\": \\\"\\\"\\n}\"\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"responseMimeType\": \"application/json\"\n  }\n}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1760, -100],
+      "id": "node-gemini-qa",
+      "name": "QA Auditor (Gemini 3.5 Flash Lite)"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO app.planos (usuario_id, conteudo_plano) VALUES ((SELECT id FROM app.usuarios WHERE telegram_id = '{{ $('Telegram Trigger').item.json.message.from.id }}'), '{{ JSON.stringify($('Gemini 3.7 Flash - Gerar Plano').item.json.candidates[0].content.parts[0].text) }}'::jsonb);"
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1980, -100],
+      "id": "node-postgres-salvar-plano",
+      "name": "Salvar Plano Supabase"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $('Gemini 3.7 Flash - Gerar Plano').item.json.candidates[0].content.parts[0].text }}"
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [2200, -100],
+      "id": "node-telegram-resposta-final",
+      "name": "Enviar Plano Telegram"
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Buscar Perfil Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Perfil Supabase": {
+      "main": [
+        [
+          {
+            "node": "Anamnese (Gemini 3.5 Flash Lite)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anamnese (Gemini 3.5 Flash Lite)": {
+      "main": [
+        [
+          {
+            "node": "Dados Completos?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dados Completos?": {
+      "main": [
+        [
+          {
+            "node": "Cálculos Determinísticos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pedir Dados Faltantes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cálculos Determinísticos": {
+      "main": [
+        [
+          {
+            "node": "Gerar Embedding Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar Embedding Query": {
+      "main": [
+        [
+          {
+            "node": "Buscar Vetores RAG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Vetores RAG": {
+      "main": [
+        [
+          {
+            "node": "Gemini 3.7 Flash - Gerar Plano",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini 3.7 Flash - Gerar Plano": {
+      "main": [
+        [
+          {
+            "node": "QA Auditor (Gemini 3.5 Flash Lite)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "QA Auditor (Gemini 3.5 Flash Lite)": {
+      "main": [
+        [
+          {
+            "node": "Salvar Plano Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salvar Plano Supabase": {
+      "main": [
+        [
+          {
+            "node": "Enviar Plano Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

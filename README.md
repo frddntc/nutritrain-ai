@@ -17,8 +17,8 @@ Um assistente pessoal de saúde, nutrição e treino rodando via Telegram. O sis
 ## Tecnologia Utilizada
 
 * **Orquestração**: [n8n](https://n8n.io/)
-* **Modelos de Linguagem**: Google Gemini (1.5 Flash, 3.5 Flash e 3.7 Flash)
-* **Embeddings**: `text-embedding-004` (768 dimensions)
+* **Modelos de Linguagem**: Google Gemini (3.5 Flash e 3.5 Flash-Lite)
+* **Embeddings**: `gemini-embedding-001` (768 dimensions)
 * **Banco de Dados**: Supabase (PostgreSQL + `pgvector`)
 * **Interface com Usuário**: Telegram Bot API
 

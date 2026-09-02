@@ -1,25 +1,31 @@
-# Agente (sistema) que seja capaz de, a partir de uma mensagem do usuário, auxiliá-lo na criação de um plano específico de dieta e treino
-## Como isso vai funcionar?
-Nosso sistema possui uma base de arquivos para embasar os pensamentos do agente. Esses arquivos, contém informações sobre nutricão e treino, além de uma tabela de fórmulas que podem ser necessárias para cálculos de perda de gordura, ganho de massa magra e outros mais objetivos. Tendo esta base de dados em mão, o agente deve utilizá-la para, em conjunto com informações extraídas do usuário, moldar um plano de dieta e treino que se encaixe melhor dentro da rotina e dos objetivos do usuário.
-É de SUMA IMPORTÂNCIA que o agente não invente dados, não forneça planilhas de treino ou dieta sem ter, no mínimo, informações básicas sobre o usuário.
-Após o contato inicial, o agente deve responder com perguntas sobre o usuário, como: Idade, Gênero, Altura, Rotina, Objetivos e mais o que julgar ser necessário para uma boa parametrização de treino e dieta (me dê ideias de perguntas a serem feitas para o usuário no contato inicial, porém mantenha como OBRIGATÓRIAS para o agente trabalhar, apenas Idade, Gênero, Altura e Objetivos)
-Tendo as respostas das perguntas em sua base de dados, o agente deve buscar nos arquivos inseridos, estudos e teorias que embasem suas decisões a partir daí. Mais uma vez, em hipótese alguma, o agente pode criar dados sobre nutrição ou treino, tudo deve ser embasado nos arquivos.
-## Qual é o fluxo da integração?
-1. Usuário envia pergunta no chat com o agente
-2. O agente responde agradecendo o contato e explicando que, para seguir com o atendimento, precisa que o usuário responda algumas perguntas
-3. Tendo as respostas das perguntas em mãos, o agente busca no seu banco de dados arquivos que o auxiliem na elaboração do plano de treino e dieta para o cliente (Este banco de dados também deve ser criado por nós para inserção dos arquivos)
-4. Tendo convicção do treino e dieta elaborados, o agente retorna estes para o usuário e DEVE dizer pra ele o quão eficaz ela é com base na quantidade de parâmetros que foram inseridos pelo cliente e, além disso, é MUITO IMPORTANTE que o agente faça uma estimativa da eficácia da dieta e do treino com base na adesão do cliente.
-    **Exemplo:**
-   "Se tiver adesão total deste modelo de dieta e treino, atingirá seus objetivos, em média, em X meses"
-   ou
-   "Se tiver adesão parcial, isto é, adotar algumas partes, mas optar por não realizar outras, atingirá seus objetivos em X + Y meses"
-5. Com isso feito, apenas espere a validação do usuário, se ele estiver satisfeito, vida que segue. Se não, explicite à ele o porque de tais recomendações com base nos estudos dos arquivos e dê a ele a opção de montar um novo plano de treino ou dieta com mais parâmetros para trabalhar.
-## Informações Técnicas
-O projeto é para uso próprio e principalmente para estudo e entendimento da plataforma n8n cloud, então é necessário que todas as ferramentas utilizadas sejam gratuitas.
-Preciso de pelo menos 2 opções de ferramentas a serem utilizadas e que, antes do plano pronto, eu selecione aquela que eu mais gostar.
-Como mencionado anteriormente, é necessário a criação de um banco de dados para colocar os arquivos que vão embasar as sugestões do agente e um banco que facilite a integração com n8n.
-Quanto ao agente, a ideia é que ele seja um chatbot (mais uma vez, quero sugestões de qual plataforma escolher para hospedar o chatbot: telegram, discord...).
-Além disso, como LLM para o agente tenho chaves de acesso aos modelos gratuitos do gemini, como Gemini Embedding 1, Gemini Embedding 2, Gemini 3 Flash e Gemini 3.1 Flash Lite.
-## Observações
-Isto é um prompt inicial para o claude realizar um projeto de solução, então explicite que isto é um brainstorm
-É fundamental que nada descrito a cima seja excluído, mas coisas que considerar importantes podem ser adicionadas
+# Assistente Fitness IA com RAG e Auto-Auditoria
+
+Um assistente pessoal de saúde, nutrição e treino rodando via Telegram. O sistema coleta dados corporais de forma conversacional, efetua cálculos metabólicos determinísticos e gera planos de treino e dieta individualizados com busca semântica (RAG) e validação automatizada via IA auditora.
+
+---
+
+## Principais Funcionalidades
+
+* **Anamnese Conversacional Inteligente**: A IA identifica os dados fornecidos pelo usuário no chat e solicita apenas os parâmetros corporais faltantes (`peso`, `altura`, `idade`, `sexo`, `objetivo`).
+* **Cálculos Clínicos Determinísticos**: Prescrição nutricional baseada na equação de Mifflin-St Jeor, eliminando erros matemáticos e alucinações de LLM.
+* **Busca Semântica na Base de Conhecimento (RAG)**: Resgate de artigos e referências internas em um banco vetorial Postgres (`pgvector`) com 768 dimensões.
+* **Ciclo de Auto-Auditoria (QA Auditor)**: Uma segunda instância de IA avalia se a resposta gerada respeitou as metas de macronutrientes e as citações de fonte. Se reprovado, o plano é reescrito automaticamente antes do envio ao cliente.
+* **Persistência de Dados**: Salva históricos de perfis e planos gerados no Supabase.
+
+---
+
+## Tecnologia Utilizada
+
+* **Orquestração**: [n8n](https://n8n.io/)
+* **Modelos de Linguagem**: Google Gemini (1.5 Flash, 3.5 Flash e 3.7 Flash)
+* **Embeddings**: `text-embedding-004` (768 dimensions)
+* **Banco de Dados**: Supabase (PostgreSQL + `pgvector`)
+* **Interface com Usuário**: Telegram Bot API
+
+---
+
+## Início Rápido
+
+1. Siga o passo a passo de configuração do banco e credenciais no [setup.md](./setup.md).
+2. Para detalhes técnicos da arquitetura dos nós e decisões de design, consulte o [docs.md](./docs.md).
+3. Ative o workflow no n8n e envie uma mensagem para o seu bot no Telegram!

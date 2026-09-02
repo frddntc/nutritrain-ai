@@ -78,25 +78,25 @@ $$;
 ## 2. Configuração de Credenciais no n8n
 No painel do n8n, cadastre as seguintes credenciais em Credentials:
 
-1. Postgres Credential (Supabase):
+1. **Postgres Credential (Supabase):**
 
-  - Host: `db.<sua-ref>.supabase.co`
+    - Host: `db.<sua-ref>.supabase.co`
 
-  - Database: `postgres`
+    - Database: `postgres`
 
-  - User: `postgres`
+    - User: `postgres`
 
-  - Password: `Sua senha do banco Supabase.`
+    - Password: `Sua senha do banco Supabase.`
 
-  - Port: `5432 (ou 6543 para Connection Pooling).`
+    - Port: `5432 (ou 6543 para Connection Pooling).`
 
-2. Telegram API:
+2. **Telegram API:**
 
-  - Access Token: Token fornecido pelo BotFather.
+    - Access Token: Token fornecido pelo BotFather.
 
-3. Variables (Variáveis de Ambiente do n8n):
+3. **Variables (Variáveis de Ambiente do n8n):**
 
-  - Adicione a variável `GEMINI_API_KEY` com a sua chave da API do Google AI Studio.
+    - Adicione a variável `GEMINI_API_KEY` com a sua chave da API do Google AI Studio.
 
 ## 3. Importação e Ativação do Workflow
 1. Baixe o arquivo JSON do Workflow

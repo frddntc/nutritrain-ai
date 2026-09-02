@@ -77,7 +77,6 @@ $$;
 ```
 ## 2. Configuração de Credenciais no n8n
 No painel do n8n, cadastre as seguintes credenciais em Credentials:
-
 1. **Postgres Credential (Supabase):**
 
     - Host: `db.<sua-ref>.supabase.co`
